@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"testing"
 )
 
@@ -35,6 +36,43 @@ func TestSetFileLabel(t *testing.T) {
 	if con != filelabel {
 		t.Fatalf("FileLabel failed, returned %s expected %s", filelabel, con)
 	}
+}
+
+func verifyLabel(t *testing.T, plabel string) {
+	current, err := CurrentLabel()
+	if err != nil {
+		t.Fatal(err)
+	}
+	con, err := newContext(current)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.HasPrefix(plabel, fmt.Sprintf("%s:%s:", con["user"], con["role"])) {
+		t.Fatal(fmt.Sprintf("plabel %s should start with %s:.", plabel, con["user"]))
+	}
+
+}
+
+func TestLabels(t *testing.T) {
+
+	if !GetEnabled() {
+		t.Skip("SELinux not enabled, skipping.")
+	}
+
+	plabel, flabel := KVMContainerLabels()
+	if plabel == "" {
+		t.Log("Failed to read kvm label")
+	}
+	t.Log(plabel)
+	t.Log(flabel)
+	if _, err := CanonicalizeContext(plabel); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := CanonicalizeContext(flabel); err != nil {
+		t.Fatal(err)
+	}
+	verifyLabel(t, plabel)
+	ReleaseLabel(plabel)
 }
 
 func TestKVMLabels(t *testing.T) {

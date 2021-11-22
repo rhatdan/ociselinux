@@ -1030,14 +1030,18 @@ func containerLabels() (processLabel string, fileLabel string) {
 
 func addMcs(processLabel, fileLabel string) (string, string) {
 	scon, _ := NewContext(processLabel)
+	cur, _ := currentLabel()
+	ccon, _ := NewContext(cur)
+	scon["user"] = ccon["user"]
+	scon["role"] = ccon["role"]
 	if scon["level"] != "" {
+		fcon, _ := NewContext(fileLabel)
 		mcs := uniqMcs(CategoryRange)
 		scon["level"] = mcs
-		processLabel = scon.Get()
-		scon, _ = NewContext(fileLabel)
-		scon["level"] = mcs
-		fileLabel = scon.Get()
+		fcon["level"] = mcs
+		fileLabel = fcon.Get()
 	}
+	processLabel = scon.Get()
 	return processLabel, fileLabel
 }
 

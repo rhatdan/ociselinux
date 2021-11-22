@@ -183,6 +183,25 @@ func TestSELinuxNoLevel(t *testing.T) {
 	}
 }
 
+func TestKeyLabel(t *testing.T) {
+	needSELinux(t)
+
+	label := "system_u:system_r:container_t:s0:c1,c2"
+	if err := selinux.SetKeyLabel(label); err != nil {
+		t.Fatal(err)
+	}
+	nlabel, err := selinux.KeyLabel()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if label != nlabel {
+		t.Errorf("KeyLabel %s != %s", nlabel, label)
+	}
+	if err := selinux.SetKeyLabel(""); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestSocketLabel(t *testing.T) {
 	needSELinux(t)
 
@@ -199,22 +218,6 @@ func TestSocketLabel(t *testing.T) {
 	}
 }
 
-func TestKeyLabel(t *testing.T) {
-	needSELinux(t)
-
-	label := "system_u:object_r:container_t:s0:c1,c2"
-	if err := selinux.SetKeyLabel(label); err != nil {
-		t.Fatal(err)
-	}
-	nlabel, err := selinux.KeyLabel()
-	if err != nil {
-		t.Fatal(err)
-	}
-	if label != nlabel {
-		t.Errorf("KeyLabel %s != %s", nlabel, label)
-	}
-}
-
 func TestFileLabel(t *testing.T) {
 	needSELinux(t)
 
@@ -223,7 +226,7 @@ func TestFileLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("InitLabels(user) failed: %v", err)
 	}
-	if mlabel != "system_u:object_r:test_file_t:s0:c1,c15" {
+	if !strings.HasSuffix(mlabel, ":test_file_t:s0:c1,c15") {
 		t.Fatalf("InitLabels(filetype) failed: %v", err)
 	}
 }
